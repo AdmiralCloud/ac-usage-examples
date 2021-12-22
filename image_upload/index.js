@@ -4,9 +4,9 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import AWS from 'aws-sdk';
-import * as MimeTypes from 'mime-types';
 import fetch from 'node-fetch';
 import acsignature from 'ac-signature';
+import fileExtensions from 'ac-file-extensions';
 
 //
 // PUT YOUR CREDENTIALS FOR AUTHENTICATED REQUESTS HERE
@@ -98,7 +98,7 @@ let s3 = new AWS.S3({
 const requestUpload = s3.upload({
     Bucket: bucket,
     Key: s3Key,
-    ContentType: MimeTypes.lookup(path.extname(PATH_IMAGE)) || 'application/octet-stream',
+    ContentType: getMimeType(path.extname(PATH_IMAGE)) || 'application/octet-stream',
     Body: fs.createReadStream(PATH_IMAGE),
 });
 
@@ -149,9 +149,16 @@ console.log('Image available in AdmiralCloud -> https://app.admiralcloud.com/con
  * getTypeForFile("/path/to/infos.pdf") => "document"
  */
 function getTypeForFile(filePath) {
-    const mimeType = MimeTypes.lookup(path.extname(filePath));
+    const mimeType = getMimeType(path.extname(filePath));
     if (mimeType === false || mimeType.startsWith('application')) {
         return 'document';
     }
     return mimeType.split('/')[0];
+}
+
+function getMimeType(fileExt) {
+    if (fileExt[0] === '.') fileExt = fileExt.substring(1);
+    const qm = fileExtensions.query({ ext: fileExt });
+    if (!qm) return 'application/octet-stream';
+    return qm.mimetype;
 }
