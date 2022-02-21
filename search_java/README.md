@@ -1,4 +1,4 @@
-# Image Upload example in Java
+# Search example in Java
 
 ## Prerequisites
 - Java
