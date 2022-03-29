@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Checksum Example</title>
+    </head>
+    <body>
+        <h1>Checksum Example</h1>
+        <p>Demonstrates how to calculate the checksum of a file in the browser.</p>
+        <p>The checksum can be used to find out if the exact same file was already uploaded into AdmiralCloud.</p>
+
+        <input type="file" id="my-file-input" />
+
+        <br /><br />
+        <button onclick="processSampled()">Compute MD5</button>
+
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.2/components/core.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.2/components/md5.js"></script>
+        <script>
+            async function processSampled() {
+                const res = await getSampledMD5(document.getElementById('my-file-input').files[0]);
+                console.log('CHECKSUM: ', res);
+                alert('CHECKSUM: ' + res);
+            }
+
+            async function getSampledMD5(file) {
+                var chunkSize = 1 * 1024 * 1024;
+
+                var md5 = CryptoJS.algo.MD5.create();
+
+                const chunkStart = await getFileSlice(file, 0, Math.min(file.size, chunkSize));
+                md5.update(CryptoJS.enc.Latin1.parse(chunkStart));
+
+                const offsetMiddle = Math.max(0, Math.floor(file.size / 2 - chunkSize / 2));
+                const chunkMiddle = await getFileSlice(file, offsetMiddle, Math.min(file.size, offsetMiddle + chunkSize));
+                md5.update(CryptoJS.enc.Latin1.parse(chunkMiddle));
+
+                const offsetEnd = Math.max(0, Math.floor(file.size - chunkSize));
+                const chunkEnd = await getFileSlice(file, offsetEnd, file.size);
+                md5.update(CryptoJS.enc.Latin1.parse(chunkEnd));
+
+                var hash = md5.finalize();
+                var hashHex = hash.toString(CryptoJS.enc.Hex);
+                return hashHex;
+            }
+
+            function getFileSlice(file, offsetStart, offsetEnd) {
+                return new Promise((resolve, reject) => {
+                    var reader = new FileReader();
+
+                    reader.onload = function () {
+                        if (reader.error) {
+                            reject(reader.error || {});
+                            return;
+                        }
+                        resolve(reader.result);
+                    };
+
+                    reader.onerror = function (err) {
+                        reject(err || {});
+                    };
+
+                    var fileSlice = file.slice(offsetStart, offsetEnd);
+                    reader.readAsBinaryString(fileSlice);
+                });
+            }
+        </script>
+    </body>
+</html>
