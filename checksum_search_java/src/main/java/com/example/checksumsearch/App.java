@@ -30,30 +30,30 @@ public class App {
         // === Search by CHECKSUM
         // ======================================================================
 
-        String jsonSearchID = new JSONObject()
+        String jsonSearchCHECKSUM = new JSONObject()
                 .put("field", "checksum")
                 .put("searchTerm", "v2:" + CHECKSUM)
                 .toString();
 
-        long signSearchID_Timestamp = System.currentTimeMillis() / 1000L;
-        String signSearchID_Hash = acRequestSignature(AUTH_ACCESS_SECRET, "search", "search", jsonSearchID,
-        signSearchID_Timestamp);
+        long signSearchCHECKSUM_Timestamp = System.currentTimeMillis() / 1000L;
+        String signSearchCHECKSUM_Hash = acRequestSignature(AUTH_ACCESS_SECRET, "search", "search", jsonSearchCHECKSUM,
+        signSearchCHECKSUM_Timestamp);
 
         // POST Request
-        HttpPost requestSearchID = new HttpPost(API_HOST + "/v5/search");
-        requestSearchID.addHeader("content-type", "application/json");
-        requestSearchID.addHeader("x-admiralcloud-accesskey", AUTH_ACCESS_KEY);
-        requestSearchID.addHeader("x-admiralcloud-rts", "" + signSearchID_Timestamp);
-        requestSearchID.addHeader("x-admiralcloud-hash", signSearchID_Hash);
-        requestSearchID.setEntity(new StringEntity(jsonSearchID));
-        HttpResponse responseSearchID = httpClient.execute(requestSearchID);
+        HttpPost requestSearchCHECKSUM = new HttpPost(API_HOST + "/v5/search");
+        requestSearchCHECKSUM.addHeader("content-type", "application/json");
+        requestSearchCHECKSUM.addHeader("x-admiralcloud-accesskey", AUTH_ACCESS_KEY);
+        requestSearchCHECKSUM.addHeader("x-admiralcloud-rts", "" + signSearchCHECKSUM_Timestamp);
+        requestSearchCHECKSUM.addHeader("x-admiralcloud-hash", signSearchCHECKSUM_Hash);
+        requestSearchCHECKSUM.setEntity(new StringEntity(jsonSearchCHECKSUM));
+        HttpResponse responseSearchCHECKSUM = httpClient.execute(requestSearchCHECKSUM);
 
-        JSONObject jsonResultsSearchID = new JSONObject(EntityUtils.toString(responseSearchID.getEntity()));
-        JSONArray jsonHitsSearchID = jsonResultsSearchID.getJSONObject("hits").getJSONArray("hits");
+        JSONObject jsonResultsSearchCHECKSUM = new JSONObject(EntityUtils.toString(responseSearchCHECKSUM.getEntity()));
+        JSONArray jsonHitsSearchCHECKSUM = jsonResultsSearchCHECKSUM.getJSONObject("hits").getJSONArray("hits");
 
-        System.out.println("Searching by ID. Results:");
-        for (int i=0; i<jsonHitsSearchID.length(); i++) {
-            JSONObject hit = jsonHitsSearchID.getJSONObject(i).getJSONObject("_source");
+        System.out.println("Searching by CHECKSUM. Results:");
+        for (int i=0; i<jsonHitsSearchCHECKSUM.length(); i++) {
+            JSONObject hit = jsonHitsSearchCHECKSUM.getJSONObject(i).getJSONObject("_source");
             System.out.println("- " + hit.getNumber("id") + " " + hit.getString("container_name"));
         }
     }
