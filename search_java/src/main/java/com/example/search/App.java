@@ -44,7 +44,7 @@ public class App {
         requestSearchID.addHeader("x-admiralcloud-accesskey", AUTH_ACCESS_KEY);
         requestSearchID.addHeader("x-admiralcloud-rts", "" + signSearchID_Timestamp);
         requestSearchID.addHeader("x-admiralcloud-hash", signSearchID_Hash);
-        requestSearchID.setEntity(new StringEntity(jsonSearchID));
+        requestSearchID.setEntity(new StringEntity(jsonSearchID, "text/plain", "UTF-8"));
         HttpResponse responseSearchID = httpClient.execute(requestSearchID);
 
         JSONObject jsonResultsSearchID = new JSONObject(EntityUtils.toString(responseSearchID.getEntity()));
@@ -74,7 +74,7 @@ public class App {
         requestSearchDefault.addHeader("x-admiralcloud-accesskey", AUTH_ACCESS_KEY);
         requestSearchDefault.addHeader("x-admiralcloud-rts", "" + signSearchDefault_Timestamp);
         requestSearchDefault.addHeader("x-admiralcloud-hash", signSearchDefault_Hash);
-        requestSearchDefault.setEntity(new StringEntity(jsonSearchDefault));
+        requestSearchDefault.setEntity(new StringEntity(jsonSearchDefault, "text/plain", "UTF-8"));
         HttpResponse responseSearchDefault = httpClient.execute(requestSearchDefault);
 
         JSONObject jsonResultsSearchDefault = new JSONObject(EntityUtils.toString(responseSearchDefault.getEntity()));

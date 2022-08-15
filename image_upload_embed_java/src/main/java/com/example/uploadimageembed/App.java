@@ -64,7 +64,7 @@ public class App {
         requestCreateUpload.addHeader("x-admiralcloud-accesskey", AUTH_ACCESS_KEY);
         requestCreateUpload.addHeader("x-admiralcloud-rts", "" + signatureTimestamp);
         requestCreateUpload.addHeader("x-admiralcloud-hash", signatureHash);
-        requestCreateUpload.setEntity(new StringEntity(jsonPostData));
+        requestCreateUpload.setEntity(new StringEntity(jsonPostData, "text/plain", "UTF-8"));
         HttpResponse responseCreateUpload = httpClient.execute(requestCreateUpload);
 
         String jobId = new JSONObject(EntityUtils.toString(responseCreateUpload.getEntity())).getString("jobId");
@@ -140,7 +140,7 @@ public class App {
         requestS3Success.addHeader("x-admiralcloud-accesskey", AUTH_ACCESS_KEY);
         requestS3Success.addHeader("x-admiralcloud-rts", "" + sigS3Success_Timestamp);
         requestS3Success.addHeader("x-admiralcloud-hash", sigS3Success_Hash);
-        requestS3Success.setEntity(new StringEntity(dataS3Success));
+        requestS3Success.setEntity(new StringEntity(dataS3Success, "text/plain", "UTF-8"));
         HttpResponse responseS3Success = httpClient.execute(requestS3Success);
 
         // ======================================================================
@@ -161,7 +161,7 @@ public class App {
         requestCreateEmbedlink.addHeader("x-admiralcloud-accesskey", AUTH_ACCESS_KEY);
         requestCreateEmbedlink.addHeader("x-admiralcloud-rts", "" + sigCreateEmbedlink_Timestamp);
         requestCreateEmbedlink.addHeader("x-admiralcloud-hash", sigCreateEmbedlink_Hash);
-        requestCreateEmbedlink.setEntity(new StringEntity(dataCreateEmbedlink));
+        requestCreateEmbedlink.setEntity(new StringEntity(dataCreateEmbedlink, "text/plain", "UTF-8"));
         HttpResponse responseCreateEmbedlink = httpClient.execute(requestCreateEmbedlink);
         JSONObject jsonEmbedlink = new JSONObject(EntityUtils.toString(responseCreateEmbedlink.getEntity()));
         System.out.println("Embedlink = https://images.admiralcloud.com/v5/deliverEmbed/"+jsonEmbedlink.getString("link")+"/image");

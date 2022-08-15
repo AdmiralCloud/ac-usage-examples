@@ -45,7 +45,7 @@ public class App {
         requestSearchCHECKSUM.addHeader("x-admiralcloud-accesskey", AUTH_ACCESS_KEY);
         requestSearchCHECKSUM.addHeader("x-admiralcloud-rts", "" + signSearchCHECKSUM_Timestamp);
         requestSearchCHECKSUM.addHeader("x-admiralcloud-hash", signSearchCHECKSUM_Hash);
-        requestSearchCHECKSUM.setEntity(new StringEntity(jsonSearchCHECKSUM));
+        requestSearchCHECKSUM.setEntity(new StringEntity(jsonSearchCHECKSUM, "text/plain", "UTF-8"));
         HttpResponse responseSearchCHECKSUM = httpClient.execute(requestSearchCHECKSUM);
 
         JSONObject jsonResultsSearchCHECKSUM = new JSONObject(EntityUtils.toString(responseSearchCHECKSUM.getEntity()));
