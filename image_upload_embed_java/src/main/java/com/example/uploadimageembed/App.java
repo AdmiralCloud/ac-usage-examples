@@ -26,6 +26,7 @@ import com.amazonaws.auth.BasicSessionCredentials;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import java.io.File;
+import java.io.FileOutputStream;
 
 public class App {
     static String AUTH_ACCESS_SECRET = "1d53c176-XXXX-43ea-XXXX-1eXXXX4aXXXX";
@@ -33,6 +34,7 @@ public class App {
 
     static String API_HOST = "https://api.admiralcloud.com";
     static String PATH_IMAGE = "./image_for_upload.jpg";
+    static String PATH_IMAGE_144P = "./image_144p.jpg";
 
     static Number FORMAT_ID = 3;
 
@@ -52,6 +54,8 @@ public class App {
                                 .put("originalFileExtension", "jpg")))
                 .put("controlGroups", new JSONArray())
                 .put("tags", new JSONArray())
+                .put("waitForCompletion", true)
+                .put("flag", 2)
                 .toString();
 
         long signatureTimestamp = System.currentTimeMillis() / 1000L;
@@ -67,40 +71,13 @@ public class App {
         requestCreateUpload.setEntity(new StringEntity(jsonPostData, "text/plain", "UTF-8"));
         HttpResponse responseCreateUpload = httpClient.execute(requestCreateUpload);
 
-        String jobId = new JSONObject(EntityUtils.toString(responseCreateUpload.getEntity())).getString("jobId");
-        System.out.println("JOBID=" + jobId);
+        JSONObject jsonCreateUpload = new JSONObject(EntityUtils.toString(responseCreateUpload.getEntity()));
+        System.out.println("uploadId=" + jsonCreateUpload.getString("uploadId"));
 
         // ======================================================================
-        // === Step 2: Wait for AWS S3 storage to be initialized
+        // === Step 2: Upload to AWS S3
         // ======================================================================
-        JSONObject jsonJobResult;
-        // Poll every 500ms until jobResult is no longer { ok: true }
-        while (true) {
-            long sigJobResult_Timestamp = System.currentTimeMillis() / 1000L;
-            String sigJobResult_Hash = acRequestSignature(AUTH_ACCESS_SECRET, "activity", "jobResult",
-                    new JSONObject().put("jobId", jobId).toString(),
-                    sigJobResult_Timestamp);
-
-            HttpGet requestJobResult = new HttpGet(API_HOST + "/v5/activity/jobResult/" + jobId);
-            requestJobResult.addHeader("content-type", "application/json");
-            requestJobResult.addHeader("x-admiralcloud-accesskey", AUTH_ACCESS_KEY);
-            requestJobResult.addHeader("x-admiralcloud-rts", "" + sigJobResult_Timestamp);
-            requestJobResult.addHeader("x-admiralcloud-hash", sigJobResult_Hash);
-            HttpResponse responseJobResult = httpClient.execute(requestJobResult);
-            jsonJobResult = new JSONObject(EntityUtils.toString(responseJobResult.getEntity()));
-
-            if (!jsonJobResult.has("ok")) {
-                break;
-            }
-            Thread.sleep(500);
-        }
-
-        System.out.println(jsonJobResult.toString(4));
-
-        // ======================================================================
-        // === Step 3: Upload to AWS S3
-        // ======================================================================
-        JSONObject jsonUploadData = jsonJobResult.getJSONArray("processed").getJSONObject(0);
+        JSONObject jsonUploadData = jsonCreateUpload.getJSONArray("processed").getJSONObject(0);
         JSONObject jsonUploadCredentials = jsonUploadData.getJSONObject("credentials");
 
         File fileImage = new File(PATH_IMAGE);
@@ -126,7 +103,7 @@ public class App {
         xfer_mgr.shutdownNow();
 
         // ======================================================================
-        // === Step 4: Tell AdmiralCloud to process file
+        // === Step 3: Tell AdmiralCloud to process file
         // ======================================================================
         String dataS3Success = new JSONObject().put("bucket", jsonUploadData.getString("bucket"))
                 .put("key", jsonUploadData.getString("s3Key")).toString();
@@ -144,29 +121,66 @@ public class App {
         HttpResponse responseS3Success = httpClient.execute(requestS3Success);
 
         // ======================================================================
-        // === Step 5: Get Embedlink
+        // === Step 4: Wait until Embedlink is available with Thumbnails
         // ======================================================================
-        Number mediaContainerId = jsonJobResult.getJSONArray("processed").getJSONObject(0).getNumber("id");
-        String dataCreateEmbedlink = new JSONObject()
+        Number mediaContainerId = jsonCreateUpload.getJSONArray("processed").getJSONObject(0).getNumber("id");
+        String dataGetEmbedlinks = new JSONObject()
                 .put("mediaContainerId", mediaContainerId)
                 .put("playerConfigurationId", FORMAT_ID)
                 .toString();
-        long sigCreateEmbedlink_Timestamp = System.currentTimeMillis() / 1000L;
-        String sigCreateEmbedlink_Hash = acRequestSignature(AUTH_ACCESS_SECRET, "embedlink", "create",
-                dataCreateEmbedlink,
-                sigCreateEmbedlink_Timestamp);
 
-        HttpPost requestCreateEmbedlink = new HttpPost(API_HOST + "/v5/embedlink/" + mediaContainerId);
-        requestCreateEmbedlink.addHeader("content-type", "application/json");
-        requestCreateEmbedlink.addHeader("x-admiralcloud-accesskey", AUTH_ACCESS_KEY);
-        requestCreateEmbedlink.addHeader("x-admiralcloud-rts", "" + sigCreateEmbedlink_Timestamp);
-        requestCreateEmbedlink.addHeader("x-admiralcloud-hash", sigCreateEmbedlink_Hash);
-        requestCreateEmbedlink.setEntity(new StringEntity(dataCreateEmbedlink, "text/plain", "UTF-8"));
-        HttpResponse responseCreateEmbedlink = httpClient.execute(requestCreateEmbedlink);
-        JSONObject jsonEmbedlink = new JSONObject(EntityUtils.toString(responseCreateEmbedlink.getEntity()));
-        System.out.println("Embedlink = https://images.admiralcloud.com/v5/deliverEmbed/"+jsonEmbedlink.getString("link")+"/image");
+        String urlImage144p = "";
 
-        System.out.println("Upload finished: https://app.admiralcloud.com/container/"+mediaContainerId+"/publish/weblink");
+        while (true) {
+            long sigCreateEmbedlink_Timestamp = System.currentTimeMillis() / 1000L;
+            String sigCreateEmbedlink_Hash = acRequestSignature(AUTH_ACCESS_SECRET, "embedlink", "find",
+                    dataGetEmbedlinks,
+                    sigCreateEmbedlink_Timestamp);
+
+            HttpGet requestGetEmbedlinks = new HttpGet(
+                API_HOST + "/v5/embedlink/" + mediaContainerId + "?playerConfigurationId=" + FORMAT_ID
+            );
+            requestGetEmbedlinks.addHeader("content-type", "application/json");
+            requestGetEmbedlinks.addHeader("x-admiralcloud-accesskey", AUTH_ACCESS_KEY);
+            requestGetEmbedlinks.addHeader("x-admiralcloud-rts", "" + sigCreateEmbedlink_Timestamp);
+            requestGetEmbedlinks.addHeader("x-admiralcloud-hash", sigCreateEmbedlink_Hash);
+            HttpResponse responseGetEmbedlinks = httpClient.execute(requestGetEmbedlinks);
+            String strresp = EntityUtils.toString(responseGetEmbedlinks.getEntity());
+            System.out.println("resp="+strresp);
+            JSONArray jsonEmbedlinks = new JSONArray(strresp);
+            
+            if (jsonEmbedlinks.length() == 0) {
+                System.out.println("No embedlink yet...");
+                Thread.sleep(400);
+                continue;
+            }
+
+            JSONObject jsonEmbedlink0 = jsonEmbedlinks.getJSONObject(0);
+            if (!jsonEmbedlink0.getBoolean("hasThumbnailVersions")) {
+                System.out.println("Embedlink.hasThumbnailVersions = false ...");
+                Thread.sleep(400);
+                continue;
+            }
+
+            urlImage144p = "https://images.admiralcloud.com/v5/deliverEmbed/"+jsonEmbedlink0.getString("link")+"/image/144";
+            System.out.println("Embedlink = " + urlImage144p);
+            break;
+        }
+
+        System.out.println("Upload finished and Embedlink available: https://app.admiralcloud.com/container/"+mediaContainerId+"/publish/weblink");
+
+
+        // ======================================================================
+        // === Step 5: Download 144p version
+        // ======================================================================
+        HttpGet request = new HttpGet(urlImage144p);
+
+        HttpResponse response = httpClient.execute(request);
+        HttpEntity entity = response.getEntity();
+        if (entity != null) {
+            FileOutputStream outstream = new FileOutputStream(new File(PATH_IMAGE_144P));
+            entity.writeTo(outstream);
+        }
     }
 
     static String acRequestSignature(String secretKey, String controller, String action, String jsonData,
