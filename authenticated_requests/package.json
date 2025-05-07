@@ -3,7 +3,7 @@
     "main": "index.js",
     "type": "module",
     "dependencies": {
-        "ac-signature": "^2.0.9",
+        "ac-signature": "^4.0.4",
         "node-fetch": "^3.1.0"
     },
     "engines": {
