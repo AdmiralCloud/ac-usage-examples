@@ -2,7 +2,7 @@
     Authenticated Requests example
 */
 import fetch from 'node-fetch';
-import acsignature from 'ac-signature';
+import acsignature from 'ac-signature'; // https://www.npmjs.com/package/ac-signature
 
 //
 // PUT YOUR CREDENTIALS FOR AUTHENTICATED REQUESTS HERE
@@ -12,11 +12,12 @@ const auth = {
     accessKey: 'idstXXXXN2X6XXXXpqWBVX',
 };
 
+const clientId = 'CLIENT_ID_FOR_YOUR_APP'
+
 // Create Signature
-const signature = acsignature.sign({
+const signature = acsignature.sign5({
     accessSecret: auth.accessSecret,
-    controller: 'customer',
-    action: 'find',
+    path: '/v5/customer',
     payload: {},
 });
 
@@ -26,9 +27,11 @@ const customer = await (
         method: 'GET',
         headers: {
             'Content-Type': 'application/json',
+            'x-admiralcloud-clientid': clientId,
             'x-admiralcloud-accesskey': auth.accessKey,
             'x-admiralcloud-rts': signature.timestamp,
             'x-admiralcloud-hash': signature.hash,
+            'x-admiralcloud-version': 5
         },
     })
 ).json();
