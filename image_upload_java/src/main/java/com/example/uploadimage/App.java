@@ -1,4 +1,4 @@
-package com.example.uploadimageembed;
+package com.example.uploadimage;
 
 import java.util.Map;
 import java.util.HashMap;
@@ -33,8 +33,6 @@ public class App {
 
     static String API_HOST = "https://api.admiralcloud.com";
     static String PATH_IMAGE = "./image_for_upload.jpg";
-
-    static Number FORMAT_ID = 3;
 
     public static void main(String[] args) throws Exception {
         HttpClient httpClient = HttpClientBuilder.create().build();
@@ -143,30 +141,7 @@ public class App {
         requestS3Success.setEntity(new StringEntity(dataS3Success, "text/plain", "UTF-8"));
         HttpResponse responseS3Success = httpClient.execute(requestS3Success);
 
-        // ======================================================================
-        // === Step 5: Get Embedlink
-        // ======================================================================
-        Number mediaContainerId = jsonJobResult.getJSONArray("processed").getJSONObject(0).getNumber("id");
-        String dataCreateEmbedlink = new JSONObject()
-                .put("mediaContainerId", mediaContainerId)
-                .put("playerConfigurationId", FORMAT_ID)
-                .toString();
-        long sigCreateEmbedlink_Timestamp = System.currentTimeMillis() / 1000L;
-        String sigCreateEmbedlink_Hash = acRequestSignature(AUTH_ACCESS_SECRET, "embedlink", "create",
-                dataCreateEmbedlink,
-                sigCreateEmbedlink_Timestamp);
-
-        HttpPost requestCreateEmbedlink = new HttpPost(API_HOST + "/v5/embedlink/" + mediaContainerId);
-        requestCreateEmbedlink.addHeader("content-type", "application/json");
-        requestCreateEmbedlink.addHeader("x-admiralcloud-accesskey", AUTH_ACCESS_KEY);
-        requestCreateEmbedlink.addHeader("x-admiralcloud-rts", "" + sigCreateEmbedlink_Timestamp);
-        requestCreateEmbedlink.addHeader("x-admiralcloud-hash", sigCreateEmbedlink_Hash);
-        requestCreateEmbedlink.setEntity(new StringEntity(dataCreateEmbedlink, "text/plain", "UTF-8"));
-        HttpResponse responseCreateEmbedlink = httpClient.execute(requestCreateEmbedlink);
-        JSONObject jsonEmbedlink = new JSONObject(EntityUtils.toString(responseCreateEmbedlink.getEntity()));
-        System.out.println("Embedlink = https://images.admiralcloud.com/v5/deliverEmbed/"+jsonEmbedlink.getString("link")+"/image");
-
-        System.out.println("Upload finished: https://app.admiralcloud.com/container/"+mediaContainerId+"/publish/weblink");
+        System.out.println("Upload finished");
     }
 
     static String acRequestSignature(String secretKey, String controller, String action, String jsonData,

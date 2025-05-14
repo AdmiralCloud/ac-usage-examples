@@ -1,4 +1,4 @@
-package com.example.checksumsearch;
+package com.example.mediacontainerdelete;
 
 import java.util.Map;
 import java.util.HashMap;
@@ -12,50 +12,50 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.util.EntityUtils;
 import org.json.JSONObject;
-import org.json.JSONArray;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class App {
+    static Number MEDIACONTAINER_ID = 1886228;
+
     static String AUTH_ACCESS_SECRET = "1d53c176-XXXX-43ea-XXXX-1eXXXX4aXXXX";
     static String AUTH_ACCESS_KEY = "idstXXXXN2X6XXXXpqWBVX";
 
     static String API_HOST = "https://api.admiralcloud.com";
-    static String CHECKSUM = "6fc5bbfc2ba81f72ab3ab05ed9ed9b8a";
+
+    static class HttpDeleteWithEntity extends HttpPost
+    {
+        public HttpDeleteWithEntity(String url){
+            super(url);
+        }
+        @Override
+        public String getMethod() {
+            return "DELETE";
+        }
+    }
 
     public static void main(String[] args) throws Exception {
         HttpClient httpClient = HttpClientBuilder.create().build();
 
-        // ======================================================================
-        // === Search by CHECKSUM
-        // ======================================================================
-
-        String jsonSearchCHECKSUM = new JSONObject()
-                .put("field", "checksum")
-                .put("searchTerm", "v2:" + CHECKSUM)
+        String jsonMcDelete = new JSONObject()
+                .put("forceDelete", true)
+                .put("id", MEDIACONTAINER_ID)
+                .put("notes", "Good reason to delete the MC")
                 .toString();
 
-        long signSearchCHECKSUM_Timestamp = System.currentTimeMillis() / 1000L;
-        String signSearchCHECKSUM_Hash = acRequestSignature(AUTH_ACCESS_SECRET, "search", "search", jsonSearchCHECKSUM,
-        signSearchCHECKSUM_Timestamp);
+        long signMcDelete_Timestamp = System.currentTimeMillis() / 1000L;
+        String signMcDelete_Hash = acRequestSignature(AUTH_ACCESS_SECRET, "mediacontainer", "destroy", jsonMcDelete,
+                signMcDelete_Timestamp);
 
-        // POST Request
-        HttpPost requestSearchCHECKSUM = new HttpPost(API_HOST + "/v5/search");
-        requestSearchCHECKSUM.addHeader("content-type", "application/json");
-        requestSearchCHECKSUM.addHeader("x-admiralcloud-accesskey", AUTH_ACCESS_KEY);
-        requestSearchCHECKSUM.addHeader("x-admiralcloud-rts", "" + signSearchCHECKSUM_Timestamp);
-        requestSearchCHECKSUM.addHeader("x-admiralcloud-hash", signSearchCHECKSUM_Hash);
-        requestSearchCHECKSUM.setEntity(new StringEntity(jsonSearchCHECKSUM, "text/plain", "UTF-8"));
-        HttpResponse responseSearchCHECKSUM = httpClient.execute(requestSearchCHECKSUM);
+        HttpDeleteWithEntity requestMcDelete = new HttpDeleteWithEntity(API_HOST + "/v5/mediacontainer/" + MEDIACONTAINER_ID);
+        requestMcDelete.addHeader("content-type", "application/json");
+        requestMcDelete.addHeader("x-admiralcloud-accesskey", AUTH_ACCESS_KEY);
+        requestMcDelete.addHeader("x-admiralcloud-rts", "" + signMcDelete_Timestamp);
+        requestMcDelete.addHeader("x-admiralcloud-hash", signMcDelete_Hash);
+        requestMcDelete.setEntity(new StringEntity(jsonMcDelete, "text/plain", "UTF-8"));
+        HttpResponse responseMcDelete = httpClient.execute(requestMcDelete);
 
-        JSONObject jsonResultsSearchCHECKSUM = new JSONObject(EntityUtils.toString(responseSearchCHECKSUM.getEntity()));
-        JSONArray jsonHitsSearchCHECKSUM = jsonResultsSearchCHECKSUM.getJSONObject("hits").getJSONArray("hits");
-
-        System.out.println("Searching by CHECKSUM. Results:");
-        for (int i=0; i<jsonHitsSearchCHECKSUM.length(); i++) {
-            JSONObject hit = jsonHitsSearchCHECKSUM.getJSONObject(i).getJSONObject("_source");
-            System.out.println("- " + hit.getNumber("id") + " " + hit.getString("container_name"));
-        }
+        System.out.println(EntityUtils.toString(responseMcDelete.getEntity()));
     }
 
     static String acRequestSignature(String secretKey, String controller, String action, String jsonData,
