@@ -46,7 +46,7 @@ java -jar target/uploadimage-1.0-SNAPSHOT-jar-with-dependencies.jar
    - For small uploads, the response from step 1 already contains the AWS credentials
    - For larger uploads, `/v5/activity/jobResult` is called to get the AWS credentials
 
-3. **Upload File to AWS S3**: The file is uploaded to S3 using the AWS TransferManager
+3. **Upload File to AWS S3**: The file is uploaded to S3 using the AWS TransferManager with the correct region
 
 4. **Notify AdmiralCloud**: After successful upload, a request is sent to `/v5/s3/success` to inform AdmiralCloud about the completed upload
 
@@ -61,26 +61,6 @@ java -jar target/uploadimage-1.0-SNAPSHOT-jar-with-dependencies.jar
 ### Logging
 
 The program uses SLF4J with Simple Logger for debugging output. For more detailed logs, add this line to execution:
-
-```bash
-mvn exec:java -Dexec.mainClass="com.example.uploadimage.App" -Dorg.slf4j.simpleLogger.defaultLogLevel=debug
-```Result` aufgerufen, um die AWS-Credentials zu erhalten
-
-3. **Datei zu AWS S3 hochladen**: Die Datei wird mit dem AWS TransferManager zu S3 hochgeladen
-
-4. **AdmiralCloud benachrichtigen**: Nach erfolgreichem Upload wird eine Anfrage an `/v5/s3/success` gesendet, um AdmiralCloud über den abgeschlossenen Upload zu informieren
-
-## Fehlerbehebung
-
-### Häufige Fehler
-
-- **Zugriffsprobleme**: Stellen Sie sicher, dass die Zugangsdaten korrekt konfiguriert sind
-- **Datei existiert nicht**: Überprüfen Sie den Pfad zur Bilddatei
-- **Netzwerkprobleme**: Prüfen Sie Ihre Internetverbindung und Firewall-Einstellungen
-
-### Logging
-
-Das Programm nutzt SLF4J mit dem Simple Logger für Debugging-Ausgaben. Um ausführlichere Logs zu erhalten, fügen Sie diese Zeile zur Ausführung hinzu:
 
 ```bash
 mvn exec:java -Dexec.mainClass="com.example.uploadimage.App" -Dorg.slf4j.simpleLogger.defaultLogLevel=debug
