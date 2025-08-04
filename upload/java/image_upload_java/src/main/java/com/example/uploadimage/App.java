@@ -27,6 +27,7 @@ import com.admiralcloud.signature.SignatureResponse;
 import java.io.File;
 import java.io.IOException;
 import java.net.SocketTimeoutException;
+import com.amazonaws.http.IdleConnectionReaper;
 
 public class App {
     // Configuration parameters
@@ -76,6 +77,12 @@ public class App {
                 } catch (IOException e) {
                     System.err.println("Error closing HTTP client: " + e.getMessage());
                 }
+            }
+            // Shut down AWS reaper thread explicitly
+            try {
+                IdleConnectionReaper.shutdown();
+            } catch (Exception e) {
+                System.err.println("Failed to shut down IdleConnectionReaper: " + e.getMessage());
             }
         }
     }
@@ -221,7 +228,7 @@ public class App {
                 httpClient, 
                 "GET", 
                 endpoint, 
-                null
+                new JSONObject().put("jobId", jobId).toString()
             );
             
             if (!jobResult.has("ok")) {
@@ -331,10 +338,5 @@ public class App {
             "/v5/s3/success", 
             jsonData
         );
-        
-        // Optional: Check response
-        if (!response.has("success") || !response.getBoolean("success")) {
-            System.out.println("Note: AdmiralCloud success notification did not return success");
-        }
     }
 }
