@@ -17,7 +17,7 @@ const auth = {
 };
 
 const API_HOST = 'https://api.admiralcloud.com';
-const PATH_IMAGE = path.resolve('./image_for_upload.jpg');
+const PATH_IMAGE = path.resolve('./image_for_upload.png');
 
 // ======================================================================
 // === Step 1: Initialize Upload
