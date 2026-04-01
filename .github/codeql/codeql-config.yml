@@ -1,0 +1,3 @@
+paths-ignore:
+  - search_java
+  - image_upload_embed_java

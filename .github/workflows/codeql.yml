@@ -1,0 +1,63 @@
+name: "CodeQL"
+
+on:
+  push:
+    branches: ["master"]
+  pull_request:
+    branches: ["master"]
+  schedule:
+    - cron: "0 0 * * 1"
+
+jobs:
+  analyze:
+    name: Analyze (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      packages: read
+      actions: read
+      contents: read
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - language: java-kotlin
+            build-mode: manual
+          - language: javascript-typescript
+            build-mode: none
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 11
+        if: matrix.language == 'java-kotlin'
+        uses: actions/setup-java@v4
+        with:
+          java-version: "11"
+          distribution: "temurin"
+          cache: "maven"
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: ${{ matrix.build-mode }}
+          config-file: ./.github/codeql/codeql-config.yml
+
+      - name: Build Java projects
+        if: matrix.build-mode == 'manual'
+        run: |
+          mvn -f checksum_search_java/pom.xml compile -q
+          mvn -f embedlinks_java/pom.xml compile -q
+          mvn -f mediacontainer_delete_java/pom.xml compile -q
+          mvn -f search/java/search_java/pom.xml compile -q
+          mvn -f upload/java/image_upload_embed_java/pom.xml compile -q
+          mvn -f upload/java/image_upload_java/pom.xml compile -q
+          mvn -f upload/java/image_upload_replace_java/pom.xml compile -q
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:${{ matrix.language }}"

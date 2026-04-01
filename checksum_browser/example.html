@@ -16,8 +16,7 @@
         <br /><br />
         <button onclick="processSampled()">Compute MD5</button>
 
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.2/components/core.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.2/components/md5.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/md5.min.js" integrity="sha512-ENWhXy+lET8kWcArT6IJA6HpVEALRmvzYBayGL6oFWl96exmq8Fjgxe2K6TAblHLP75Sa/a1YjHpIZRt+9hGOQ==" crossorigin="anonymous"></script>
         <script>
             async function processSampled() {
                 const res = await getSampledMD5(document.getElementById('my-file-input').files[0]);

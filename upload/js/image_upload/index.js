@@ -3,7 +3,8 @@
 */
 import * as fs from 'fs';
 import * as path from 'path';
-import AWS from 'aws-sdk';
+import { S3Client } from '@aws-sdk/client-s3';
+import { Upload } from '@aws-sdk/lib-storage';
 import fetch from 'node-fetch';
 import acsignature from 'ac-signature';
 import fileExtensions from 'ac-file-extensions';
@@ -88,18 +89,22 @@ const { bucket, region, s3Key } = jobResult.processed[0];
 const { AccessKeyId, SecretAccessKey, SessionToken } = jobResult.processed[0].credentials;
 
 // Start Upload
-let s3 = new AWS.S3({
-    accessKeyId: AccessKeyId,
-    secretAccessKey: SecretAccessKey,
-    sessionToken: SessionToken,
+const s3 = new S3Client({
+    credentials: {
+        accessKeyId: AccessKeyId,
+        secretAccessKey: SecretAccessKey,
+        sessionToken: SessionToken,
+    },
     region,
-    signatureVersion: 'v4',
 });
-const requestUpload = s3.upload({
-    Bucket: bucket,
-    Key: s3Key,
-    ContentType: getMimeType(path.extname(PATH_IMAGE)) || 'application/octet-stream',
-    Body: fs.createReadStream(PATH_IMAGE),
+const requestUpload = new Upload({
+    client: s3,
+    params: {
+        Bucket: bucket,
+        Key: s3Key,
+        ContentType: getMimeType(path.extname(PATH_IMAGE)) || 'application/octet-stream',
+        Body: fs.createReadStream(PATH_IMAGE),
+    },
 });
 
 // Display Progress info
@@ -108,7 +113,7 @@ requestUpload.on('httpUploadProgress', (progress) => {
 });
 
 // Wait for upload to finish
-await requestUpload.promise();
+await requestUpload.done();
 
 // ======================================================================
 // === Step 4: Tell AdmiralCloud to process file
