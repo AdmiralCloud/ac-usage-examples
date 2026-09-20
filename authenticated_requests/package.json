@@ -3,8 +3,8 @@
     "main": "index.js",
     "type": "module",
     "dependencies": {
-        "ac-signature": "^4.0.4",
-        "node-fetch": "^3.1.0"
+        "ac-signature": "^4.0.11",
+        "node-fetch": "^3.3.2"
     },
     "engines": {
         "node": ">=16"
